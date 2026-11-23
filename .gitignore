@@ -3,9 +3,9 @@ node_modules
 dist
 .mastra
 src/mastra/public/
-.env.development
 .env
-.env.local
+.env.*
+!.env.example
 *.db
 *.db-*
 .netlify
