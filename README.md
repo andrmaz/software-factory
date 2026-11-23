@@ -63,9 +63,9 @@ The committed `.mastra-project.json` selects the platform project. The default
 deployment environment is `production`. Before deploying:
 
 - Use the Node.js version required by `package.json`, install dependencies with
-  `pnpm install --frozen-lockfile`, then run `pnpm run check` and `pnpm run build`.
-- Install the global CLI with `pnpm add -g mastra` if needed. Run
-  `pnpm exec mastra auth whoami` to verify CLI authentication, or
+  `pnpm install --frozen-lockfile`. The project includes the Mastra CLI, so no
+  global installation is needed. Run `pnpm run check` before deploying.
+- Run `pnpm exec mastra auth whoami` to verify CLI authentication, or
   `pnpm exec mastra auth login` to sign in.
 - Confirm production has a ready, attached PostgreSQL database with pgvector.
   The platform injects its `DATABASE_URL`; don't overwrite it with an empty value.
@@ -86,7 +86,9 @@ Deploy using the project's script:
 pnpm run deploy --env production --workers in-process
 ```
 
-Use `--workers dedicated` instead only when the environment has Redis.
+This targets production with in-process workers. For other environments or
+dedicated workers, use `pnpm run deploy --env <name> --workers <mode>`.
+Use `--workers dedicated` only when the environment has Redis.
 
 The CLI reports the deployed Factory and Studio URLs. Local env files can overwrite
 platform settings during deployment, including secrets; review the selected file
@@ -129,7 +131,7 @@ Keep the project's CLI dependencies installed for these commands. You can use Ma
 | `npm run check`  | Typecheck the Factory Server.                        |
 | `npm run build`  | Build the server and Factory UI in `.mastra/output`. |
 | `npm run start`  | Run the production build.                            |
-| `npm run deploy` | Build and deploy to Mastra platform.                 |
+| `pnpm run deploy` | Build and deploy to Mastra platform; accepts CLI flags. |
 
 ## Troubleshooting
 
