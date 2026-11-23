@@ -59,13 +59,58 @@ With `MASTRA_PLATFORM_SECRET_KEY` (or `MASTRA_PLATFORM_ACCESS_TOKEN`) set, `npm 
 
 ### Mastra platform
 
-Deploy the Factory Server to your Mastra platform project:
+The committed `.mastra-project.json` selects the platform project. The default
+deployment environment is `production`. Before deploying:
+
+- Use the Node.js version required by `package.json`, install dependencies with
+  `pnpm install --frozen-lockfile`. The project includes the Mastra CLI, so no
+  global installation is needed. Run `pnpm run check` before deploying.
+- Run `pnpm exec mastra auth whoami` to verify CLI authentication, or
+  `pnpm exec mastra auth login` to sign in.
+- Confirm production has a ready, attached PostgreSQL database with pgvector.
+  The platform injects its `DATABASE_URL`; don't overwrite it with an empty value.
+- Set `FACTORY_CREDENTIAL_ENCRYPTION_KEY` in the platform's environment settings.
+  Reuse the key that encrypted existing database credentials, not a newly generated
+  replacement. Keep it stable and backed up.
+- Configure runtime platform credentials (`MASTRA_PLATFORM_ACCESS_TOKEN` or
+  `MASTRA_PLATFORM_SECRET_KEY`), `MASTRA_PROJECT_ID`, and `MASTRA_ENVIRONMENT_ID`
+  for platform sandboxes and integrations. CLI login is not a substitute for these
+  server-side credentials.
+- Set `MASTRA_ORGANIZATION_ID` to the owning organization and
+  `MASTRACODE_PUBLIC_URL` to the actual HTTPS Factory origin supplied by the
+  platform, not the Studio origin or localhost.
+
+Deploy using the project's script:
 
 ```bash
-npm run deploy
+pnpm run deploy --env production --workers in-process
 ```
 
-The CLI reports the deployed Factory URL. See [Deployment](https://factory.mastra.ai/deployment) for environment configuration and deployment options.
+This targets production with in-process workers. For other environments or
+dedicated workers, use `pnpm run deploy --env <name> --workers <mode>`.
+Use `--workers dedicated` only when the environment has Redis.
+
+The CLI reports the deployed Factory and Studio URLs. Local env files can overwrite
+platform settings during deployment, including secrets; review the selected file
+and never upload `.env.example` as production configuration. Keep secrets in the
+platform's environment settings or ignored `.env.*` files.
+
+**Authentication:** Keep `MASTRA_PLATFORM_STUDIO_AUTH` unset so hosted Studio
+requires platform organization membership. Studio protection alone does not secure
+API routes. This project's `factory.prepare()` supplies both `server.auth` and
+`studio.auth` using Factory's platform provider; the exported Mastra instance
+preserves that configuration. Do not replace it with `auth: null`.
+
+After deployment, visit both reported URLs in a signed-out browser and confirm
+sign-in is required. Unauthenticated requests to `/api/agents` and protected
+Factory endpoints must be rejected (401/403 or a sign-in redirect), not return
+application data. Sign in as an organization member, verify access, then sign out
+and confirm access is revoked. Confirm callbacks return to the deployed Factory
+and an investigation uses a platform sandbox.
+
+See [Factory deployment](https://factory.mastra.ai/deployment),
+[Studio platform authentication](https://mastra.ai/docs/mastra-platform/deploy/studio#authentication),
+and [Factory authentication](https://factory.mastra.ai/configure/auth).
 
 ### Self-host
 
@@ -86,7 +131,7 @@ Keep the project's CLI dependencies installed for these commands. You can use Ma
 | `npm run check`  | Typecheck the Factory Server.                        |
 | `npm run build`  | Build the server and Factory UI in `.mastra/output`. |
 | `npm run start`  | Run the production build.                            |
-| `npm run deploy` | Build and deploy to Mastra platform.                 |
+| `pnpm run deploy` | Build and deploy to Mastra platform; accepts CLI flags. |
 
 ## Troubleshooting
 
